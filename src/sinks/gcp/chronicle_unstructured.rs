@@ -132,6 +132,10 @@ pub struct ChronicleUnstructuredConfig {
     #[configurable(metadata(docs::examples = "production"))]
     pub namespace: Option<String>,
 
+    /// labels
+    #[configurable(metadata(docs::examples = "key: value"))]
+    pub labels: Option<Vec<Labels>>,
+
     #[serde(flatten)]
     pub auth: GcpAuthConfig,
 
@@ -307,10 +311,18 @@ impl MetaDescriptive for ChronicleRequest {
 }
 
 #[derive(Clone, Debug, Serialize)]
+struct Labels {
+    key: String,
+    value: String
+}
+
+#[derive(Clone, Debug, Serialize)]
 struct ChronicleRequestBody {
     customer_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     namespace: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    labels: Option<Vec<Labels>>,
     log_type: String,
     entries: Vec<serde_json::Value>,
 }
@@ -366,6 +378,7 @@ impl Encoder<(String, Vec<Event>)> for ChronicleEncoder {
         let json = json!(ChronicleRequestBody {
             customer_id: self.customer_id.clone(),
             namespace: self.namespace.clone(),
+            labels: self.labels.clone(),
             log_type: partition_key,
             entries: events,
         });
